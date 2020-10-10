@@ -6,20 +6,20 @@ import { decode } from "./decode.ts";
 
 const commandTagRegexp = /^([A-Za-z]+)(?: (\d+))?(?: (\d+))?/;
 
-type CommandType = (
+type CommandType =
   | "INSERT"
   | "DELETE"
   | "UPDATE"
   | "SELECT"
   | "MOVE"
   | "FETCH"
-  | "COPY"
-);
+  | "COPY";
 
 export interface QueryConfig {
   text: string;
   args?: Array<unknown>;
   name?: string;
+  parseResult?: boolean;
   encoder?: (arg: unknown) => EncodedArg;
 }
 
@@ -38,7 +38,7 @@ export class QueryResult {
   }
 
   // deno-lint-ignore no-explicit-any
-  private _parseDataRow(dataRow: any[]): any[] {
+  private _parseDataRow(dataRow: any[], parseResult = true): any[] {
     const parsedRow = [];
 
     for (let i = 0, len = dataRow.length; i < len; i++) {
@@ -48,7 +48,7 @@ export class QueryResult {
       if (rawValue === null) {
         parsedRow.push(null);
       } else {
-        parsedRow.push(decode(rawValue, column));
+        parsedRow.push(decode(rawValue, column, parseResult));
       }
     }
 
@@ -56,12 +56,12 @@ export class QueryResult {
   }
 
   // deno-lint-ignore no-explicit-any
-  handleDataRow(dataRow: any[]): void {
+  handleDataRow(dataRow: any[], parseResult = true): void {
     if (this._done) {
       throw new Error("New data row, after result if done.");
     }
 
-    const parsedRow = this._parseDataRow(dataRow);
+    const parsedRow = this._parseDataRow(dataRow, parseResult);
     this.rows.push(parsedRow);
   }
 
@@ -100,6 +100,7 @@ export class Query {
   public text: string;
   public args: EncodedArg[];
   public result: QueryResult;
+  parseResult: boolean;
 
   // TODO: can we use more specific type for args?
   constructor(text: string | QueryConfig, ...args: unknown[]) {
@@ -109,6 +110,7 @@ export class Query {
     } else {
       config = text;
     }
+    this.parseResult = !!config.parseResult;
     this.text = config.text;
     this.args = this._prepareArgs(config);
     this.result = new QueryResult(this);

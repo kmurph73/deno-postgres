@@ -200,8 +200,16 @@ function decodeJsonArray(value: string): unknown[] {
 }
 
 // deno-lint-ignore no-explicit-any
-function decodeText(value: Uint8Array, typeOid: number): any {
+function decodeText(
+  value: Uint8Array,
+  typeOid: number,
+  parseResult = true,
+): any {
   const strValue = decoder.decode(value);
+
+  if (!parseResult) {
+    return strValue;
+  }
 
   switch (typeOid) {
     case Oid.char:
@@ -267,11 +275,11 @@ function decodeText(value: Uint8Array, typeOid: number): any {
   }
 }
 
-export function decode(value: Uint8Array, column: Column) {
+export function decode(value: Uint8Array, column: Column, parseResult = true) {
   if (column.format === Format.BINARY) {
     return decodeBinary();
   } else if (column.format === Format.TEXT) {
-    return decodeText(value, column.typeOid);
+    return decodeText(value, column.typeOid, parseResult);
   } else {
     throw new Error(`Unknown column format: ${column.format}`);
   }

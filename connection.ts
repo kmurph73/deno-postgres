@@ -87,10 +87,9 @@ export class Connection {
   private _pid?: number;
   private _secretKey?: number;
   private _parameters: { [key: string]: string } = {};
-  private _queryLock: DeferredStack<undefined> = new DeferredStack(
-    1,
-    [undefined],
-  );
+  private _queryLock: DeferredStack<undefined> = new DeferredStack(1, [
+    undefined,
+  ]);
 
   constructor(private connParams: ConnectionParams) {}
 
@@ -116,9 +115,9 @@ export class Connection {
     // TODO: recognize other parameters
     writer.addCString("user").addCString(connParams.user);
     writer.addCString("database").addCString(connParams.database);
-    writer.addCString("application_name").addCString(
-      connParams.applicationName,
-    );
+    writer
+      .addCString("application_name")
+      .addCString(connParams.applicationName);
 
     // eplicitly set utf-8 encoding
     writer.addCString("client_encoding").addCString("'utf-8'");
@@ -130,10 +129,7 @@ export class Connection {
 
     writer.clear();
 
-    const finalBuffer = writer
-      .addInt32(bodyLength)
-      .add(bodyBuffer)
-      .join();
+    const finalBuffer = writer.addInt32(bodyLength).add(bodyBuffer).join();
 
     await this.bufWriter.write(finalBuffer);
   }
@@ -321,7 +317,7 @@ export class Connection {
         case "D": {
           // this is actually packet read
           const foo = this._readDataRow(msg);
-          result.handleDataRow(foo);
+          result.handleDataRow(foo, query.parseResult);
           break;
         }
         // command complete
@@ -515,7 +511,7 @@ export class Connection {
         case "D": {
           // this is actually packet read
           const rawDataRow = this._readDataRow(msg);
-          result.handleDataRow(rawDataRow);
+          result.handleDataRow(rawDataRow, query.parseResult);
           break;
         }
         // command complete
