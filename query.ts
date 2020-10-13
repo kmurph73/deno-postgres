@@ -100,7 +100,7 @@ export class Query {
   public text: string;
   public args: EncodedArg[];
   public result: QueryResult;
-  parseResult: boolean;
+  public parseResult: boolean;
 
   // TODO: can we use more specific type for args?
   constructor(text: string | QueryConfig, ...args: unknown[]) {
@@ -110,7 +110,7 @@ export class Query {
     } else {
       config = text;
     }
-    this.parseResult = !!config.parseResult;
+    this.parseResult = config.parseResult === true;
     this.text = config.text;
     this.args = this._prepareArgs(config);
     this.result = new QueryResult(this);
